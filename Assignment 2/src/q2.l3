@@ -1,0 +1,173 @@
+(define take
+  (lambda (lst pos)
+    (if(or (empty? lst) (= 0 pos))
+      '()
+        (if(> pos (length lst))
+          lst
+          (if(pair? lst)
+            (cons (car lst)
+              (take (cdr lst) (- pos 1)))
+          '())))
+      
+  )
+ )
+
+(define take-map
+  (lambda (lst func pos)
+    (if (or (empty? lst) (= pos 0))
+      '()
+      (cons (func (car lst))
+            (take-map (cdr lst) func (- pos 1))))
+  )
+ )
+
+(define take-filter
+  (lambda (lst pred pos)
+    (if (or (empty? lst) (= pos 0))
+      '()
+      (if (pred (car lst))
+          (cons (car lst)
+                (take-filter (cdr lst) pred (- pos 1)))
+          (take-filter (cdr lst) pred pos)))
+  )
+ )
+
+(define sub-size
+  (lambda (lst size)
+    (if (or (empty? lst) (= size 0))
+        '(())
+        (if (= (length lst) size)
+            (cons lst '())
+            (cons (take lst size)
+                  (sub-size (cdr lst) size))))
+  )
+ )
+
+(define sub-size-map2
+  (lambda (lst func)
+    (if (not (empty? lst))
+      (cons (func (car lst)) (sub-size-map2 (cdr lst) func))
+        '())
+  )
+)
+
+(define sub-size-map
+  (lambda (lst func size)
+    (if (= 0 size)
+        '(())
+        (if (= size (length lst))
+            (list (sub-size-map2 lst func))
+            (cons (sub-size-map2 (take lst size) func) (sub-size-map (cdr lst) func size))))
+ )
+)
+
+
+(define root
+  (lambda (tree)
+    (if (pair? tree)
+      (car tree)
+      '())
+  )
+ )
+
+(define left
+  (lambda (tree)
+    (if (and (pair? (cdr tree)) (pair? tree))
+      (car (cdr tree))
+      '())
+  )
+ )
+
+(define right
+  (lambda (tree)
+    (if (not (empty? (cdr tree)))
+        (if (not (empty? (cdr (cdr tree))))
+            (car (cdr (cdr tree)))
+            '())
+        '())
+  )
+)
+
+(define count-node
+  (lambda (tree val)
+  (if (pair? tree)
+      (+ (count-node (car (cdr tree)) val) 
+            (if (car (cdr (cdr tree))) 
+              (count-node (car (cdr (cdr tree))) val) 
+              0)
+          (count-node (car tree) val))
+      (if (eq? tree val) 1 0) )
+  )
+)
+
+(define mirror-tree
+  (lambda (tree)
+    (if (empty? tree)
+        '()
+        (if (pair? tree)
+            (cons (root tree) (cons (mirror-tree (right tree)) (cons(mirror-tree(left tree)) '())))
+            tree))
+  )
+)
+
+(define make-ok
+  (lambda (val)
+    (cons 'ok val)
+  )
+ )
+ 
+(define make-error
+  (lambda (msg)
+    (cons 'error msg)
+  )
+ )
+
+(define ok?
+  (lambda (res)
+    (if (pair? res)
+        (if (eq? (car res) 'ok)
+            #t
+            #f)
+        #f)
+  )
+ )
+
+(define error?
+  (lambda (res)
+    (if (pair? res)
+        (if (eq? (car res) 'error)
+            #t
+            #f)
+        #f)
+  )
+ )
+
+(define result?
+  (lambda (res)
+    (if (pair? res)
+        (or (error? res) (ok? res))
+        #f)
+  )
+ )
+
+(define result->val
+  (lambda (res)
+    (if (pair? res)
+        (if (result? res)
+            (cdr res)
+            (make-error "Error: not a result"))
+        (make-error "Error: not a result"))
+  )
+)
+
+(define bind 
+  (lambda (f)
+    (lambda (res)
+      (if (result? res)
+          (if (ok? res)
+              (f (result->val res))
+              res)
+          (make-error "Error: not a result"))
+    )
+  )
+)
